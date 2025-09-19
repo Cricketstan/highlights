@@ -10,12 +10,17 @@ async function main() {
     const res = await fetch(API_URL);
     let text = await res.text();
 
-    // Remove wrapper: onVideos(...);
+    // Example response: onVideos({...});
     if (text.startsWith("onVideos(")) {
-      text = text.replace(/^onVideos\(/, "").replace(/\);?$/, "");
+      text = text.replace(/^onVideos\(/, "").replace(/\);?\s*$/, "");
     }
 
-    const jsonData = JSON.parse(text);
+    let jsonData = JSON.parse(text);
+
+    // Some feeds wrap inside { data: [...] }
+    if (jsonData.data) {
+      jsonData = jsonData.data;
+    }
 
     const simplified = jsonData.map((item) => ({
       SNo: item.SNo,
@@ -32,7 +37,7 @@ async function main() {
     fs.writeFileSync("output.json", JSON.stringify(simplified, null, 2));
     console.log("✅ output.json generated successfully!");
   } catch (err) {
-    console.error("❌ Error:", err);
+    console.error("❌ Error parsing API:", err.message);
     process.exit(1);
   }
 }
